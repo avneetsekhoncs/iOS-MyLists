@@ -9,16 +9,14 @@ import UIKit
 
 class ListViewController: UITableViewController {
     
-    var itemArray = ["Movies", "Bali Trip", "Weekend Plans"]
-    
-    let uDefaults = UserDefaults.standard
+    var itemArray = [DataManager]()
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Data.plist")
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Load persistent data from user defaults
-        if let itemArrayElements = uDefaults.array(forKey: "listItemArray") as? [String] {
-            itemArray = itemArrayElements
-        }
+        
+        //Load persistent data
+        loadDataItems()
     }
     
     //Number of cells that will be created in the table view.
@@ -27,29 +25,25 @@ class ListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
         //Create the cell
         let cell = tableView.dequeueReusableCell(withIdentifier: "ListItemCell", for: indexPath)
         
         //Configure the cell
         var cellConfig = UIListContentConfiguration.cell()
-        
-        cellConfig.text = itemArray[indexPath.row]
+        cellConfig.text = itemArray[indexPath.row].title
         cell.contentConfiguration = cellConfig
+        
+        //Display the checkmark
+        cell.accessoryType = itemArray[indexPath.row].checked ? .checkmark : .none
         
         return cell
     }
     
-    //
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(itemArray[indexPath.row])
+        //Assign checkmark bool
+        itemArray[indexPath.row].checked = !itemArray[indexPath.row].checked
         
-        //Display checkmark to show cell is selected
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
+        saveDataItems()
         
         //UI upgrade to animate selection
         tableView.deselectRow(at: indexPath, animated: true)
@@ -58,16 +52,18 @@ class ListViewController: UITableViewController {
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
         var newItemText = UITextField()
-        
         let newItemAlert = UIAlertController(title: "Add new item", message: "", preferredStyle: .alert)
         let newItemAction = UIAlertAction(title: "Add item", style: .default) { newItemAction in
+            
             //User pressed "Add item" button, process the following:
-            self.itemArray.append(newItemText.text!)
-            //Store key-value pairs persistently with user defaults database
-            self.uDefaults.set(self.itemArray, forKey: "listItemArray")
-            self.tableView.reloadData()
+            let newData = DataManager()
+            newData.title = newItemText.text!
+            self.itemArray.append(newData)
+            
+            self.saveDataItems()
         }
         
+        //Add item button on pop up
         newItemAlert.addTextField { alertTextField in
             alertTextField.placeholder = "Add item"
                 newItemText = alertTextField
@@ -76,7 +72,29 @@ class ListViewController: UITableViewController {
         present(newItemAlert, animated: true, completion: nil)
     }
     
+    func saveDataItems() {
+        //Encode instances of DataManager data types to a property list
+        let encoder = PropertyListEncoder()
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error encoding: \(error)")
+        }
+        
+        //Reload table view
+        self.tableView.reloadData()
+    }
     
-    
+    func loadDataItems() {
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([DataManager].self, from: data)
+            } catch {
+                print("Error decoding data items: \(error)")
+            }
+        }
+    }
 }
 
