@@ -10,10 +10,15 @@ import UIKit
 class ListViewController: UITableViewController {
     
     var itemArray = ["Movies", "Bali Trip", "Weekend Plans"]
+    
+    let uDefaults = UserDefaults.standard
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        // Load persistent data from user defaults
+        if let itemArrayElements = uDefaults.array(forKey: "listItemArray") as? [String] {
+            itemArray = itemArrayElements
+        }
     }
     
     //Number of cells that will be created in the table view.
@@ -31,7 +36,6 @@ class ListViewController: UITableViewController {
         
         cellConfig.text = itemArray[indexPath.row]
         cell.contentConfiguration = cellConfig
-        
         
         return cell
     }
@@ -59,6 +63,8 @@ class ListViewController: UITableViewController {
         let newItemAction = UIAlertAction(title: "Add item", style: .default) { newItemAction in
             //User pressed "Add item" button, process the following:
             self.itemArray.append(newItemText.text!)
+            //Store key-value pairs persistently with user defaults database
+            self.uDefaults.set(self.itemArray, forKey: "listItemArray")
             self.tableView.reloadData()
         }
         
@@ -68,8 +74,6 @@ class ListViewController: UITableViewController {
         }
         newItemAlert.addAction(newItemAction)
         present(newItemAlert, animated: true, completion: nil)
-        
-        
     }
     
     
