@@ -35,5 +35,21 @@ class ListViewController: UITableViewController {
         
         return cell
     }
+    
+    //
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        print(itemArray[indexPath.row])
+        
+        //Display checkmark to show cell is selected
+        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
+            tableView.cellForRow(at: indexPath)?.accessoryType = .none
+        } else {
+            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+        }
+        
+        //UI upgrade to animate selection
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
 }
 
