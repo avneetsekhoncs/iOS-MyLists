@@ -30,7 +30,14 @@
                             <outlet property="delegate" destination="duf-mX-fgJ" id="odc-o4-3DO"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="A-list" id="An0-7N-Df3"/>
+                    <navigationItem key="navigationItem" title="A-list" id="An0-7N-Df3">
+                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="as3-Go-yS6">
+                            <color key="tintColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <connections>
+                                <action selector="addButtonPressed:" destination="duf-mX-fgJ" id="OOj-Jb-Q5e"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="3fO-qr-HCg" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>

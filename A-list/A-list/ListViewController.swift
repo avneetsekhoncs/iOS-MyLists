@@ -9,7 +9,7 @@ import UIKit
 
 class ListViewController: UITableViewController {
     
-    let itemArray = ["Movies", "Bali Trip", "Weekend Plans"]
+    var itemArray = ["Movies", "Bali Trip", "Weekend Plans"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,6 +50,29 @@ class ListViewController: UITableViewController {
         //UI upgrade to animate selection
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        
+        var newItemText = UITextField()
+        
+        let newItemAlert = UIAlertController(title: "Add new item", message: "", preferredStyle: .alert)
+        let newItemAction = UIAlertAction(title: "Add item", style: .default) { newItemAction in
+            //User pressed "Add item" button, process the following:
+            self.itemArray.append(newItemText.text!)
+            self.tableView.reloadData()
+        }
+        
+        newItemAlert.addTextField { alertTextField in
+            alertTextField.placeholder = "Add item"
+                newItemText = alertTextField
+        }
+        newItemAlert.addAction(newItemAction)
+        present(newItemAlert, animated: true, completion: nil)
+        
+        
+    }
+    
+    
     
 }
 
