@@ -8,7 +8,7 @@
 import UIKit
 import CoreData
 
-class ListViewController: UITableViewController {
+class ListViewController: SwipeTableViewController {
     
     var itemArray = [DataManager]()
     //Optional CategoryManager because it will be nil until something is seleceted.
@@ -25,9 +25,10 @@ class ListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        tableView.rowHeight = 65.0
     }
     
-    //MARK: - TableView Data Source Functoinality
+    //MARK: - TableView Data Source Functionality
     //Number of cells that will be created in the table view.
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemArray.count
@@ -35,10 +36,9 @@ class ListViewController: UITableViewController {
     
     //Cell modifications
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        //Create the cell
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ListItemCell", for: indexPath)
         
-        //Configure the cell
+        //Create the cell
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         var cellConfig = UIListContentConfiguration.cell()
         cellConfig.text = itemArray[indexPath.row].title
         cell.contentConfiguration = cellConfig
@@ -52,10 +52,6 @@ class ListViewController: UITableViewController {
     //MARK: - TableView Delegate Functionality
     //Cell selection
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        //Delete item from context then the array. Order matters.
-        //context.delete(itemArray[indexPath.row])
-        //itemArray.remove(at: indexPath.row)
         
         //Assign checkmark bool
         itemArray[indexPath.row].checked = !itemArray[indexPath.row].checked
@@ -125,6 +121,21 @@ class ListViewController: UITableViewController {
         
         //Reload table view
         tableView.reloadData()
+    }
+    
+    override func updateModel(at indexPath: IndexPath) {
+        //Delete item from context then the array. Order matters.
+        self.context.delete(self.itemArray[indexPath.row])
+        self.itemArray.remove(at: indexPath.row)
+        
+        /*
+         Can't call saveDataCategories() because you can't realodData before "editActionsOptionsForRowAt" runs. Reloading too early will cause an error because you are trying to delete something that is already gone.
+         */
+        do {
+            try self.context.save()
+        } catch {
+            print("Error saving through context: \(error)")
+        }
     }
 }
 
