@@ -11,18 +11,23 @@ import CoreData
 class ListViewController: UITableViewController {
     
     var itemArray = [DataManager]()
+    //Optional CategoryManager because it will be nil until something is seleceted.
+    var selectedCategory: CategoryManager? {
+        didSet {
+            //Load persistent data
+            loadDataItems()
+        }
+    }
+    
     //Access to the AppDelegate.swift as an object so we can use NSPersistentContainer
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        
-        //Load persistent data
-        //loadDataItems()
     }
     
+    //MARK: - TableView Data Source Functoinality
     //Number of cells that will be created in the table view.
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemArray.count
@@ -44,8 +49,14 @@ class ListViewController: UITableViewController {
         return cell
     }
     
+    //MARK: - TableView Delegate Functionality
     //Cell selection
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        //Delete item from context then the array. Order matters.
+        //context.delete(itemArray[indexPath.row])
+        //itemArray.remove(at: indexPath.row)
+        
         //Assign checkmark bool
         itemArray[indexPath.row].checked = !itemArray[indexPath.row].checked
         
@@ -55,6 +66,7 @@ class ListViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
+    //MARK: - Plus Button Functionality
     //New list item
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
@@ -66,6 +78,7 @@ class ListViewController: UITableViewController {
             let newData = DataManager(context: self.context)
             newData.title = newItemText.text!
             newData.checked = false
+            newData.parentCategory = self.selectedCategory
             self.itemArray.append(newData)
             
             self.saveDataItems()
@@ -80,28 +93,60 @@ class ListViewController: UITableViewController {
         present(newItemAlert, animated: true, completion: nil)
     }
     
-    //Save list items to a plist
+    //MARK: - CoreData Functionality
+    //Save list items to CoreData
     func saveDataItems() {
         do {
             try context.save()
         } catch {
-            print("Error saving context: \(error)")
+            print("Error saving through context: \(error)")
         }
         
         //Reload table view
-        self.tableView.reloadData()
+        tableView.reloadData()
     }
     
-    //Load items from a plist
-//    func loadDataItems() {
-//        if let data = try? Data(contentsOf: dataFilePath!) {
-//            let decoder = PropertyListDecoder()
-//            do {
-//                itemArray = try decoder.decode([DataManager].self, from: data)
-//            } catch {
-//                print("Error decoding data items: \(error)")
-//            }
-//        }
-//    }
+    //Load items from CoreData, DataManager.fetchRequest() is the default value
+    func loadDataItems(with request: NSFetchRequest<DataManager> = DataManager.fetchRequest(), predicate: NSPredicate? = nil) {
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let originalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, originalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data through context: \(error)")
+        }
+        
+        //Reload table view
+        tableView.reloadData()
+    }
 }
 
+//MARK: - Search Bar Functionality
+extension ListViewController: UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let request: NSFetchRequest<DataManager> = DataManager.fetchRequest()
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadDataItems(with: request, predicate: predicate)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadDataItems()
+            
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+    }
+    
+}
