@@ -17,7 +17,6 @@ class CategoryTableViewController: SwipeTableViewController {
         super.viewDidLoad()
     
         loadDataCategories()
-        tableView.rowHeight = 65.0
     }
 
     // MARK: - TableView data source

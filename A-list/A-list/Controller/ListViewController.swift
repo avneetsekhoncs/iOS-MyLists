@@ -25,9 +25,13 @@ class ListViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.rowHeight = 65.0
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        if let catTitle = selectedCategory?.name {
+            title = catTitle
+        }
+    }
     //MARK: - TableView Data Source Functionality
     //Number of cells that will be created in the table view.
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
